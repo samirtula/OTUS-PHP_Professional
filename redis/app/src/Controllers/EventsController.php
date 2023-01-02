@@ -22,10 +22,7 @@ class EventsController
     {
         try {
             $params = json_decode($request->getBody()->getContents(), true);
-            $event = $params['event'] ?? null;
-            $priority = $params['priority'] ?? null;
-            $conditions = $params['conditions'] ?? null;
-            $this->storage->add($conditions, $event, $priority);
+            $this->storage->add($params);
 
             return $this->successResponse($response);
         } catch (\Exception $e) {
@@ -56,8 +53,7 @@ class EventsController
     {
         try {
             $params = json_decode($request->getBody()->getContents(), true);
-            $conditions = $params['conditions'] ?? null;
-            $res = $this->storage->get($conditions);
+            $res = $this->storage->get($params);
 
             return $this->jsonResponse($response, $res);
         } catch (\Exception $e) {

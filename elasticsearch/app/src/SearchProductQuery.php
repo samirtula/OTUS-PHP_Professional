@@ -4,10 +4,13 @@ declare(strict_types=1);
 
 namespace HW10\App;
 
-use HW10\App\DTO\Store;
+use HW10\App\DTO\StoreDTO;
+use HW10\App\Interfaces\QueryInterface;
 
-class QueryParams
+class SearchProductQuery implements QueryInterface
 {
+    protected const ELEMENTS_LIMIT = 25;
+
     private const FIELDS = [
         'title:',
         'sku:',
@@ -18,16 +21,7 @@ class QueryParams
         'limit:',
         'offset:',
     ];
-    private const RESPONSE_SOURCE_FIELDS = [
-        'sku' => 'sku',
-        'title' => 'title',
-        'category' => 'category',
-        'price' => 'price',
-        'stock' => 'stock'
-    ];
-    private const ELEMENTS_LIMIT = 25;
-
-    private function getParams(): array
+    public function getParams(): array
     {
         return \getopt(
             '',
@@ -46,13 +40,13 @@ class QueryParams
         $preparedResult = [];
         foreach ($response as $responseElement) {
             $dtoObj = new $DTO(
-                $responseElement['_source'][self::RESPONSE_SOURCE_FIELDS['sku']],
-                $responseElement['_source'][self::RESPONSE_SOURCE_FIELDS['title']],
-                $responseElement['_source'][self::RESPONSE_SOURCE_FIELDS['category']],
-                $responseElement['_source'][self::RESPONSE_SOURCE_FIELDS['price']]
+                $responseElement['_source']['sku'],
+                $responseElement['_source']['title'],
+                $responseElement['_source']['category'],
+                $responseElement['_source']['price']
             );
-            foreach ($responseElement['_source'][self::RESPONSE_SOURCE_FIELDS['stock']] as $stockInfo) {
-                $dtoObj->addStores(new Store($stockInfo['shop'], $stockInfo['stock']));
+            foreach ($responseElement['_source']['stock'] as $stockInfo) {
+                $dtoObj->addStores(new StoreDTO($stockInfo['shop'], $stockInfo['stock']));
             }
             $preparedResult[] = $dtoObj;
         }
@@ -60,7 +54,7 @@ class QueryParams
         return $preparedResult;
     }
 
-    private function prepare(array $params): array
+    public function prepare(array $params): array
     {
         $conditions = [];
         foreach ($params as $name => $value) {

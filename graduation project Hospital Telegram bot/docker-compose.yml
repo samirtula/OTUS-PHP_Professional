@@ -1,0 +1,62 @@
+version: "3"
+
+services:
+
+  nginx:
+    image: nginx:latest
+    volumes:
+      - ./docker/nginx/templates:/etc/nginx/templates
+      - ./:/var/www/html
+    ports:
+      - ${APP_PORT}:80
+    environment:
+      - APP_URL=${APP_URL}
+    depends_on:
+      - php-fpm
+    networks:
+      - network
+
+  php-fpm:
+    build:
+      context: ./docker/php-fpm
+      args:
+        WWWGROUP: ${WWWGROUP}
+        WWWUSER: ${WWWUSER}
+        PHP_INI_DIR: ${PHP_INI_DIR}
+        APP_MODE: ${APP_MODE}
+    container_name: hospital_web
+    volumes:
+      - ./:/var/www/html
+      - ./log/php-fpm:/var/log/php-fpm
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      - db
+    networks:
+      - network
+
+  db:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: ${DB_USERNAME}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_DATABASE}
+    ports:
+      - ${FORWARD_DB_PORT}:5432
+    volumes:
+      - ./docker/postgresql:/var/lib/postgresql/data
+    networks:
+      - network
+
+  redis:
+    image: redis:latest
+    volumes:
+      - ./docker/redis:/var/lib/redis
+    ports:
+      - ${REDIS_PORT}:6379
+    networks:
+      - network
+
+networks:
+  network:
+    driver: bridge
